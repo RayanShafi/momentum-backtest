@@ -1,17 +1,29 @@
-# Does Momentum Survive Honest Testing?
+# Shariah-Aware Momentum Backtest
 
-A cross-sectional momentum backtest on 50 large-cap US stocks, built to answer one question:
-**if you test a strategy properly, does the edge survive?**
+A long-only momentum strategy on a screened universe of large-cap US stocks, tested
+out-of-sample with transaction costs and bootstrapped confidence intervals.
 
-Most backtests on the internet overstate performance. This project deliberately includes the
-checks that expose that.
+**Question:** can a simple momentum strategy that avoids short selling, leverage and
+non-compliant business activities add value over holding the same stocks equally, and how much of
+any apparent edge is distinguishable from luck?
+
+> This is a research exercise, not a fatwa or investment advice. The screen is a first pass on
+> business activity only. Financial-ratio screens (debt, interest income, etc.) are not applied.
+> Verify every ticker with a screening service and a qualified scholar before relying on it.
 
 ## Strategy
 Each month-end:
 1. Rank stocks by trailing return over the past *L* months, **skipping the most recent month**
    (to avoid the short-term reversal effect, as in Jegadeesh & Titman, 1993).
-2. Go long the top 20%, short the bottom 20%, equal-weighted.
+2. Hold the top 30% equal-weighted. **Long-only: no short selling, no leverage.**
 3. Hold for one month, then rebalance.
+
+## Universe screen
+Starting from 50 US large caps, the following are removed (see `universe.txt` for the final list):
+- Conventional (interest-based) banks and insurers: JPM, BAC, WFC, GS, UNH, CVS
+- Excluded conservatively pending verification: DIS, CMCSA, MCD, BA, VZ, T
+
+The 30% portfolio size was fixed in advance, not tuned on results.
 
 ## What makes the evaluation honest
 | Check | Why it matters |
@@ -20,51 +32,54 @@ Each month-end:
 | **Transaction costs** | 10 bps charged on turnover; sensitivity shown at 0/10/25/50 bps. |
 | **No look-ahead** | Weights set at month-end *t* earn returns over month *t+1*. |
 | **Bootstrap CI on Sharpe** | A Sharpe ratio is an estimate, not a fact. 95% interval reported. |
-| **Benchmark** | Compared to an equal-weight portfolio of the same stocks. |
+| **Like-for-like benchmark** | Compared to an equal-weight portfolio of the same screened stocks. |
+| **Cached data** | Prices are saved to `prices.csv` so every run is reproducible. |
 
 ## Run it
 ```bash
 pip install -r requirements.txt
-python backtest.py              # real data via yfinance
-python backtest.py --synthetic  # simulated data, no internet needed
+python backtest.py              # real data via yfinance (cached in prices.csv)
+python backtest.py --synthetic  # simulated data, code test only
 ```
-Outputs `results.png` and `results.csv`.
+Outputs `results.png`, `results.csv` and `universe.txt`.
 
 ## Results
-Out-of-sample period: February 2020 to October 2026 (the final 40% of the data).
-Lookback chosen on training data only: 3 months.
+Out-of-sample period: [FIRST DATE] to October 2026 (the final 40% of the data).
+Lookback chosen on training data only: 9 months.
 
 | Strategy | Ann. return | Ann. vol | Sharpe | 95% CI (Sharpe) | Max drawdown |
 |---|---|---|---|---|---|
-| Momentum L/S (3m, net 10bps) | -5.7% | 20.8% | -0.18 | [-0.93, 0.61] | -50.9% |
-| Equal-weight benchmark | 16.8% | 15.9% | 1.06 | [0.30, 1.91] | -18.6% |
+| Long-only momentum (9m, net 10bps) | 23.1% | 17.3% | 1.29 | [0.56, 2.05] | -11.2% |
+| Equal-weight screened universe | 19.5% | 15.6% | 1.23 | [0.48, 2.07] | -17.4% |
 
 ![Results](results.png)
 
 **Findings**
-- Momentum did not beat the benchmark out-of-sample. The Sharpe confidence interval includes zero, so the result is statistically indistinguishable from no edge.
-- Costs worsened it (Sharpe -0.05 at 0bps, -0.70 at 50bps), but the signal was already negative before costs.
-- No portfolio size tested (top/bottom 10-40%) produced a positive Sharpe.
-- The training scores for the 3, 9 and 12 month lookbacks were nearly identical (0.18, 0.15, 0.17), so the selected lookback is fragile. Adding one stock to the universe changed the selection from 12 to 3 months.
-- Data is cached in prices.csv so results are reproducible.
-
-These results apply to this small universe and period only and do not show that momentum fails in general.
+- Momentum returned more than the benchmark and had a shallower worst drawdown, but the Sharpe
+  confidence intervals overlap almost entirely, so there is **no statistically significant edge**.
+- Transaction costs barely mattered (Sharpe 1.32 at 0 bps, 1.18 at 50 bps).
+- Training Sharpe ratios for the 3, 6, 9 and 12 month lookbacks (1.17, 1.29, 1.29, 1.15) were
+  nearly identical, so the selected lookback is fragile.
 
 ## Known limitations (read these)
-- **Survivorship bias**: the stock list is today's large caps, so it excludes companies that
-  failed or were dropped. This flatters any long-biased strategy. Fix: use point-in-time index
-  constituents.
-- **Only 4 lookbacks tested**, but the more you test, the more likely the "best" is luck.
-  A proper treatment would apply a deflated Sharpe ratio or White's reality check.
-- **Costs are a flat assumption**; real costs depend on liquidity, spread and borrow fees
-  (shorting is not free).
-- **Short sample / single market regime.**
+- **Survivorship bias**: the stock list is today's large caps, which excludes companies that
+  failed or were dropped. This flatters returns, for the strategy and the benchmark.
+- **Strong test period**: 2020 onwards was a very favourable market for large-cap growth stocks.
+- **Screen is incomplete**: business-activity only. Debt, interest-income and cash ratios are
+  not applied, and today's screening status is applied to past years, when a company may not have
+  qualified.
+- **Small universe** (36 stocks, so about 10 held at a time), so results are noisy and
+  concentrated.
+- **Parameter fragility**: the four lookbacks scored almost identically in training.
+- **Costs are a flat assumption**; real costs depend on liquidity and spread.
+- **Dividends**: any real-world investing would also need to consider purification of
+  non-compliant income. Not modelled here.
 
 ## Ideas for extension
-- Point-in-time universe to remove survivorship bias
-- Add value or quality factors and test a combined signal
-- Regress returns on Fama-French factors to see if "momentum alpha" is just market beta
-- Volatility-scaled momentum (Barroso & Santa-Clara, 2015)
+- Apply financial-ratio screens (debt / market cap, interest income share) using real data
+- Use point-in-time index constituents to remove survivorship bias
+- Test a larger universe and other markets (e.g. FTSE, via `.L` tickers)
+- Regress returns on Fama-French factors to see if the result is just market and size exposure
 
 ## Stack
 Python, pandas, NumPy, matplotlib, yfinance.
