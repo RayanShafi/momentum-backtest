@@ -66,7 +66,7 @@ Data: January 2010 to October 2026. Out-of-sample period: February 2020 to Octob
 - Training Sharpe ratios for the 3, 6, 9 and 12 month lookbacks (1.35, 1.41, 1.43, 1.42) were
   nearly identical, so the selected lookback is fragile.
 
-## Known limitations (read these)
+## Known limitations
 - **Survivorship bias**: the universe is built from stocks that are compliant and listed *today*,
   which excludes companies that failed, were delisted or lost compliance. This flatters returns for
   both the strategy and the benchmark, and is probably the largest limitation here.
@@ -81,12 +81,6 @@ Data: January 2010 to October 2026. Out-of-sample period: February 2020 to Octob
 - **Costs are a flat assumption**; real costs depend on liquidity and spread.
 - **Dividends**: real-world investing would also need to consider purification of non-compliant
   income. Not modelled here.
-
-## Ideas for extension
-- Use point-in-time compliance data and index constituents to remove survivorship bias
-- Test a larger universe and other markets (e.g. FTSE, via `.L` tickers)
-- Regress returns on Fama-French factors to see if the result is just market and size exposure
-- Add a volatility-scaled momentum variant
 
 ## Stack
 Python, pandas, NumPy, matplotlib, yfinance.
