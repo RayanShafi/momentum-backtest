@@ -25,7 +25,7 @@ The 30% portfolio size was fixed in advance, not tuned on results.
 29 October 2026. Selection rule: compliant US large and mid caps from the screener's list, chosen without 
 reference to past performance.
 
-Stocks that listed after 2010 (for example (CHWY, FIVE, GEV, NOW, PANW, SNDR) are kept and used only from
+Stocks that listed after 2010 (for example CHWY, FIVE, GEV, NOW, PANW, SNDR) are kept and used only from
 the point they have enough price history. Dropping them would have added survivorship bias.
 
 ## What makes the evaluation honest
@@ -41,8 +41,8 @@ the point they have enough price history. Dropping them would have added survivo
 ## Run it
 ```bash
 pip install -r requirements.txt
-python backtest.py              # real data via yfinance (cached in prices.csv)
-python backtest.py --synthetic  # simulated data, code test only
+python backtest.py              
+python backtest.py --synthetic  
 ```
 Outputs `results.png`, `results.csv` and `universe.txt`. If you change the ticker list, delete
 `prices.csv` first.
