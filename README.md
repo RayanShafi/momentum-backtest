@@ -1,86 +1,85 @@
 # Shariah-Aware Momentum Backtest
 
-A long-only momentum strategy on a universe of 46 US stocks confirmed compliant by a screening
-service, tested out-of-sample with transaction costs and bootstrapped confidence intervals.
+This project tests a simple momentum strategy on 46 US stocks that a screening service has marked as Shariah compliant. The strategy is long-only, uses no leverage, and is tested on data that was not used to choose its settings.
 
-**Question:** can a simple momentum strategy that avoids short selling, leverage and
-non-compliant business activities add value over holding the same stocks equally, and how much of
-any apparent edge is distinguishable from luck?
+## Aim
 
-> This is a research exercise, not a fatwa or investment advice. Compliance status comes from a
-> third-party screener (SP Funds, checked 29 October 2026) and changes over time. Verify
-> with a qualified scholar before relying on it.
+I wanted to find out whether a simple momentum strategy could beat an equal-weight portfolio of the same stocks without short selling or borrowing, and how much of any difference could be put down to chance.
 
-## Strategy
-Each month-end:
-1. Rank stocks by trailing return over the past *L* months, **skipping the most recent month**
-   (to avoid the short-term reversal effect, as in Jegadeesh & Titman, 1993).
-2. Hold the top 30% (about 13 stocks) equal-weighted. **Long-only: no short selling, no leverage.**
-3. Hold for one month, then rebalance.
+## Disclaimer
 
-The 30% portfolio size was fixed in advance, not tuned on results.
+This is a student research project. It is not investment advice or a fatwa. Compliance status was taken from a third-party screener (SP Funds, checked on 29 October 2026) and can change over time. Anyone who wants to invest on this basis should speak to a qualified scholar first.
+
+## Method
+
+At the end of each month, I:
+
+1. ranked every stock by its return over the previous L months, leaving out the most recent month. The latest month is skipped because stock prices tend to partly reverse over short horizons, which can distort a momentum signal (Jegadeesh and Titman, 1993);
+2. bought the top 30% of stocks (about 13) in equal amounts; and
+3. held them for one month before repeating the process.
+
+The strategy never sells short or borrows. I fixed the 30% figure before running the test rather than adjusting it afterwards. The lookback length L (3, 6, 9 or 12 months) was chosen using only the first 60% of the data.
 
 ## Universe
-46 US-listed stocks (listed in `universe.txt`), all marked compliant by SP Funds on
-29 October 2026. Selection rule: compliant US large and mid caps from the screener's list, chosen without 
-reference to past performance.
 
-Stocks that listed after 2010 (for example CHWY, FIVE, GEV, NOW, PANW, SNDR) are kept and used only from
-the point they have enough price history. Dropping them would have added survivorship bias.
+The universe is 46 US-listed stocks, listed in `universe.txt`. All were marked compliant by SP Funds on 29 October 2026. I selected US large and mid-cap companies from the screener's list without looking at their past performance.
 
-## What makes the evaluation honest
-| Check | Why it matters |
+Six of the stocks (CHWY, FIVE, GEV, NOW, PANW and SNDR) began trading after January 2010. I include each of them from the point at which it has enough price history, because leaving them out would have favoured companies that were already successful.
+
+## Checks used
+
+| Check | What I did |
 |---|---|
-| **Train/test split (60/40)** | The lookback is chosen on training data only; results are reported on untouched data. |
-| **Transaction costs** | 10 bps charged on turnover; sensitivity shown at 0/10/25/50 bps. |
-| **No look-ahead** | Weights set at month-end *t* earn returns over month *t+1*. |
-| **Bootstrap CI on Sharpe** | A Sharpe ratio is an estimate, not a fact. 95% interval reported. |
-| **Like-for-like benchmark** | Compared to an equal-weight portfolio of the same stocks. |
-| **Cached data** | Prices are saved to `prices.csv` so every run is reproducible. |
+| Train/test split | The lookback was chosen on the first 60% of the data. The results below use only the remaining 40%. |
+| Transaction costs | A cost of 10 basis points is charged on turnover. I also tested 0, 25 and 50. |
+| Timing | Positions chosen at the end of one month earn the following month's return, so the strategy never uses information it would not have had. |
+| Confidence interval | I resampled the monthly returns 5,000 times to estimate a 95% interval for the Sharpe ratio. |
+| Benchmark | An equal-weight portfolio of the same stocks. |
+| Saved data | Prices are stored in `prices.csv`, so the results can be reproduced exactly. |
 
-## Run it
+## Running the code
+
+Install the requirements and then run the script. The second command uses randomly generated prices and is only there to check that the code runs.
+
 ```bash
 pip install -r requirements.txt
-python backtest.py              
-python backtest.py --synthetic  
+python backtest.py
+python backtest.py --synthetic
 ```
-Outputs `results.png`, `results.csv` and `universe.txt`. If you change the ticker list, delete
-`prices.csv` first.
+
+The script saves `results.png`, `results.csv` and `universe.txt`. If the ticker list is changed, `prices.csv` needs to be deleted first so that new data is downloaded.
 
 ## Results
-Data: January 2010 to October 2026. Out-of-sample period: February 2020 to October 2026
-(the final 40% of the data). Lookback chosen on training data only: 9 months.
 
-| Strategy | Ann. return | Ann. vol | Sharpe | 95% CI (Sharpe) | Max drawdown |
+The data runs from January 2010 to October 2026. The out-of-sample period is February 2020 to October 2026, which is the final 40% of the data. The lookback chosen in training was 9 months.
+
+| Strategy | Annual return | Annual volatility | Sharpe ratio | 95% interval (Sharpe) | Maximum drawdown |
 |---|---|---|---|---|---|
-| Long-only momentum (9m, net 10bps) | 22.2% | 19.2% | 1.15 | [0.39, 1.96] | -16.6% |
+| Long-only momentum (9 months, after 10bp costs) | 22.2% | 19.2% | 1.15 | [0.39, 1.96] | -16.6% |
 | Equal-weight universe | 19.6% | 18.1% | 1.08 | [0.35, 1.86] | -22.7% |
 
 ![Results](results.png)
 
-**Findings**
-- Momentum returned slightly more than the benchmark with a shallower worst drawdown, but the
-  Sharpe confidence intervals overlap almost entirely, so there is **no statistically significant
-  edge**.
-- Transaction costs barely mattered (Sharpe 1.18 at 0 bps, 1.02 at 50 bps).
-- Training Sharpe ratios for the 3, 6, 9 and 12 month lookbacks (1.35, 1.41, 1.43, 1.42) were
-  nearly identical, so the selected lookback is fragile.
+Momentum returned about 2.6 percentage points a year more than the benchmark and had a smaller worst drawdown. However, the 95% intervals for the two Sharpe ratios overlap almost completely, so I cannot say the difference is more than chance.
 
-## Known limitations
-- **Survivorship bias**: the universe is built from stocks that are compliant and listed *today*,
-  which excludes companies that failed, were delisted or lost compliance. This flatters returns for
-  both the strategy and the benchmark, and is probably the largest limitation here.
-- **Screen applied backwards in time**: today's compliance status is applied to past years, when a
-  company may not have qualified.
-- **Strong test period**: 2020 onwards was a very favourable market for large-cap growth and
-  technology stocks, which make up much of the universe.
-- **Third-party screen**: the status comes from one service; different screeners and scholars can
-  disagree on individual stocks.
-- **Modest universe** (46 stocks, about 13 held at a time), so results are noisy.
-- **Parameter fragility**: the four lookbacks scored almost identically in training.
-- **Costs are a flat assumption**; real costs depend on liquidity and spread.
-- **Dividends**: real-world investing would also need to consider purification of non-compliant
-  income. Not modelled here.
+Transaction costs had little effect. The Sharpe ratio was 1.18 with no costs and 1.02 with costs of 50 basis points.
 
-## Stack
-Python, pandas, NumPy, matplotlib, yfinance.
+The four lookbacks scored almost the same in training (1.35, 1.41, 1.43 and 1.42 for 3, 6, 9 and 12 months), so the choice of 9 months is not well supported by the data.
+
+## Limitations
+
+- **Survivorship bias.** The universe contains stocks that are compliant and listed today, so it leaves out companies that failed, were delisted or lost their compliance. This flatters both the strategy and the benchmark, and I think it is the largest weakness of the project.
+- **Compliance applied to the past.** Today's screening result is applied to earlier years, when a company may not have qualified.
+- **A favourable test period.** From 2020 onwards, large technology and growth stocks performed strongly, and they make up a good part of the universe.
+- **One screener.** The compliance status comes from a single service, and screeners and scholars can disagree about individual companies.
+- **A small universe.** With 46 stocks and about 13 held at a time, the results are quite noisy.
+- **Simple costs.** Trading costs are a fixed assumption, whereas real costs depend on liquidity and spreads.
+- **Dividends.** An investor would also need to think about purifying any non-compliant income. I have not modelled this.
+
+## Tools
+
+Python (pandas, NumPy and matplotlib), with price data downloaded using yfinance.
+
+## Reference
+
+Jegadeesh, N. and Titman, S. (1993) 'Returns to buying winners and selling losers: implications for stock market efficiency', *Journal of Finance*, 48(1), pp. 65-91.
