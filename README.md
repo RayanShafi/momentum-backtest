@@ -22,11 +22,10 @@ The 30% portfolio size was fixed in advance, not tuned on results.
 
 ## Universe
 46 US-listed stocks (listed in `universe.txt`), all marked compliant by SP Funds on
-29 October 2026. Selection rule: compliant US large caps from the screener's list, chosen without 
+29 October 2026. Selection rule: compliant US large and mid caps from the screener's list, chosen without 
 reference to past performance.
 
-Stocks that listed after 2010 (for example A, ABT, ADBE, AMZN, AVGO, BBY, BSX, CDNS, CHWY, COP, COST, CSCO, CTAS, CVX, DLTR, FIVE, GEV, GNRC, IDXX, INTC, JNJ, LIN, MDT, MRVL, MSFT, NOW, ODFL, PANW, PG, PH, QCOM, RBC, RMD, ROST, RVTY, SNDR, SNPS, SWKS, SYK, TECH, TJX, TSCO, UNH, WMT, WSM, XOM) 
-are kept and used only from
+Stocks that listed after 2010 (for example (CHWY, FIVE, GEV, NOW, PANW, SNDR) are kept and used only from
 the point they have enough price history. Dropping them would have added survivorship bias.
 
 ## What makes the evaluation honest
